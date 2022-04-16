@@ -1,0 +1,380 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+
+
+
+
+<!--
+    Welcome message at top of screen
+    -->
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Use the box below to search for and compare your health care options</p>
+
+
+    <!--
+        Search boxes for the procedure and code
+
+    -->
+    <form>
+        <p>
+            <input type="text" placeholder="Code" asp-for="SearchString" style="width: 300px;" />
+            or
+            <input type="text" placeholder="Description" asp-for="SearchStringDesc" style="width: 300px;" />
+
+        </p>
+
+        <!--
+            Option for using current location, and a input box for entering an address
+
+        -->
+        <div class="pr-1 pb-2">
+            Use current location
+            <input type="radio" asp-for="UseCurrLocation" value="yes" />
+
+            or Enter a location
+            <input type="text" placeholder=" 221B Baker Street" asp-for="UserLocation" style="width: 200px;" />
+        </div>
+        <input class="btn btn-primary" type="submit" value="Search" />
+        <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+            Filters
+        </a>
+
+
+
+
+
+
+        <div class="collapse" id="collapseExample">
+
+            <p>Use the filters to narrow the search</p>
+
+
+            <!--
+                drop down filters on the screen
+                one for entering the max distance
+                and one for entering the max cost
+
+            -->
+            <div class="form-group row">
+                <div class="container">
+
+                    <p>
+
+                        <div class="pr-1 pb-2">
+
+                            Set Max Cost
+                            <input type="text" placeholder="$" asp-for="CostTo" style="width: 150px;" />
+                        </div>
+
+                        <div class="pr-1 pb-2">
+
+                            Set Max Distance
+                            <input type="text" placeholder="miles" asp-for="DistanceAway" style="width: 150px;" />
+
+                        </div>
+                    </p>
+                </div>
+            </div>
+
+
+        </div>
+    </form>
+</div>
+
+
+<p>
+
+</p>
+@if (IndexModel.DataFound == false)
+{
+    <p>
+        <br />
+        <center>
+            <h2>
+                No Results Found
+            </h2>
+        </center>
+    </p>
+}
+else
+{
+    @if (IndexModel.UserInput != null)
+    {
+
+
+        <!--
+            uses as container with 2 colums to store the results first and then the map
+            results are shown as two tabs and the map is static on the right
+            results table has overflow set to auto to allow scrolable lists
+            when size of table exceeds the set height
+
+        -->
+        <script>showLatLon();</script>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-5">
+
+                    <div class="tab">
+                        <button class="tablinks" onclick="openCity(event, 'Top Hits')" id="defaultOpen">Top Hits</button>
+
+                        <button class="tablinks" onclick="openCity(event, 'All Results')">All Results</button>
+                    </div>
+
+
+                    <div id="Top Hits" class="tabcontent" style="height:500px;overflow: auto;font-size: 12px">
+
+
+                        <table class="table">
+
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>
+                                        Procedure
+                                    </th>
+                                    <th>
+                                        Facility Name
+                                    </th>
+
+
+                                    <th>
+                                        Cost $
+                                    </th>
+                                    <th>
+                                        Distance(m)
+                                    </th>
+                                    <th>
+                                        Address
+                                    </th>
+
+
+                                </tr>
+                            </thead>
+
+
+
+                            <tbody>
+                                @foreach (var item in IndexModel.RankedResults)
+                                {
+
+                                    <tr>
+                                        <td>
+                                            @item.CombineLabel()
+                                        </td>
+
+                                        <td>
+                                            @item.definition
+                                        </td>
+
+                                        <td>
+                                            @item.providerName
+                                        </td>
+
+
+                                        <td>
+                                            @string.Format("{0:0.00}", item.cost)
+                                        </td>
+                                        <td>
+                                            @item.distanceFromUser
+                                        </td>
+                                        <td>
+                                            @item.address.DisplayAddress()
+                                        </td>
+
+
+                                    </tr>
+
+
+
+
+
+                                }
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+
+                    <div id="All Results" class="tabcontent" style="height:500px;overflow: auto; font-size: 12px">
+
+
+                        <table class="table">
+                            @if (IndexModel.UserInput != null)
+                            {
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>
+                                            Procedure
+                                        </th>
+                                        <th>
+                                            Facility Name
+                                        </th>
+
+
+                                        <th>
+                                            Cost $
+                                        </th>
+                                        <th>
+                                            Distance(m)
+                                        </th>
+                                        <th>
+                                            Address
+                                        </th>
+                                    </tr>
+                                </thead>
+
+
+                                <tbody>
+                                    @foreach (var item in IndexModel.Data)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @item["Label"]
+                                            </td>
+
+                                            <td>
+                                                @item["Description"]
+                                            </td>
+
+                                            <td>
+                                                @item["Name"]
+                                            </td>
+
+
+                                            <td>
+                                                @string.Format("{0:0.00}", Convert.ToDouble(item["Cost"]))
+                                            </td>
+                                            <td>
+                                                @item["Distance"]
+                                            </td>
+                                            <td>
+                                                @item["Address"], @item["City"], @item["State"], @item["Zip"]
+                                            </td>
+
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            }
+                        </table>
+
+                    </div>
+                </div>
+
+                <!--
+                    right section of the screen holding the map
+                    width and height are set to 100% to provide dynamic
+                    screen resizing
+
+                -->
+                <div class="col-lg-7">
+                    <div id="myMap" style="width: 100%; height: 100%; position: absolute;"></div>
+                    <script type="text/javascript">
+
+                        function loadMapScenario() {
+                            var map = new Microsoft.Maps.Map(document.getElementById('myMap'), {});
+                            navigator.geolocation.getCurrentPosition(function (position) {
+                                var loc = new Microsoft.Maps.Location(
+                                    position.coords.latitude,
+                                    position.coords.longitude);
+
+                                //Add a pushpin at the user's location.
+                                var pin = new Microsoft.Maps.Pushpin(loc);
+                                map.entities.push(pin);
+
+                                map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.road, center: loc, zoom: 15 });
+
+                            });
+                        }
+
+                        function showLatLon() {
+                            map.entities.clear();
+
+                            var lat = document.getElementById(BingMap.Lat).value;
+                            var lon = document.getElementById(BingMap.Lng).value;
+
+                            if (isLatLonValid(lat, lon) == false) {
+                                alert("Please enter valid location.");
+                                return false;
+                            }
+
+                            var latlonLocation = new Microsoft.Maps.Location(lat, lon);
+                            map.setView({ zoon: 12, center: latlonLocation });
+                            var pushpin = createPushpin(latlonLocation, "1");
+                            pushpin.geoname = "Manually entered location";
+
+                            map.entities.push(pushpin);
+                            showInfoBox(pushpin);
+
+                        }
+                    </script>
+                </div>
+            </div>
+
+        </div>
+
+
+
+
+
+
+    }
+
+
+
+
+    else if (IndexModel.TwoBoxes)
+    {
+        <p>
+            <br />
+            <center>
+                <h2>
+                    Use one box to search
+                </h2>
+            </center>
+        </p>
+    }
+    else if (!IndexModel.ValidEntry)
+    {
+        <p>
+            <br />
+            <center>
+                <h2>
+                    Please enter your search in the correct box
+                </h2>
+            </center>
+        </p>
+    }
+}
+
+
+
+
+
+
+
+<script>
+    function openCity(evt, cityName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(cityName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+    document.getElementById("defaultOpen").click();
+
+</script>
